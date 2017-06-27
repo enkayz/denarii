@@ -1,0 +1,1 @@
+hubot-coind/src/hubot-coind.coffee

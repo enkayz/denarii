@@ -1,0 +1,9 @@
+[
+  "hubot-help",
+  "hubot-karma-classic",
+  "hubot-redis-brain",
+  "hubot-shipit",
+  "hubot-coininfo",
+  "hubot-rules",
+  "hubot-xkcd"
+]

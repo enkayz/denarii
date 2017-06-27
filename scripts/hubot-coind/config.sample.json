@@ -1,0 +1,17 @@
+{"daemon":{
+  "host": "localhost",
+  "port": 9332,
+  "username": "denariusd",
+  "password": "denariusd$999",
+  "timeout": 30000
+},
+"name": "Denarius",
+"symb": "DNR",
+"mintip": 0.001,
+"minwithdraw": 0.1,
+"fee": 0.00001,
+"cmddelay": 10,
+"minconf": 6,
+"soakinterval_minutes": 10,
+"minactivetime": 2
+}

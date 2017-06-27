@@ -1,0 +1,7 @@
+node_modules
+.git-bak
+.DS_Store*
+.hubot_history
+scripts/hubot-coind/config.json
+start.sh
+start-slack.sh
