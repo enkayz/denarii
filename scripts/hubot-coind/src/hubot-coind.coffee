@@ -97,6 +97,7 @@ class Actives
       distance = end - now
       if distance < 0
         clearInterval timer
+        dest = active.usersSince(mintime)
         bot.daemon.cmd "getbalance", [soakacct, minconf], (error, response) ->
           soakbalance = parseFloat(response.result)
           amnt = (soakbalance / dest.length)
@@ -139,7 +140,7 @@ module.exports = (robot) ->
   robot.respond /showallusers/, (msg) ->
     users = @robot.brain.data.users
     num = (k for own k of users).length
-    logins = (users[k].name for k of users)
+    logins = (users[k].login for k of users)
     msg.reply "[OK] All users (" + num + "): " + logins.toString()
 
 #   for e, k of users
@@ -151,7 +152,7 @@ module.exports = (robot) ->
     destnum = dest.length
     amnt = Number(msg.match[1])
     soakacct = "_soakacct_"
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -185,7 +186,7 @@ module.exports = (robot) ->
         if robot.brain.get("soaking") is true
           bot.daemon.cmd "getbalance", [soakacct, minconf], (e, r) ->
             soakbalance = parseFloat(r.result)
-            msg.reply "#{soakbalance}#{symb} will be soaked soon"
+            msg.reply "#{soakbalance}#{symb} will be :umbrella:soaked:umbrella: soon"
             return
         else
           now = Math.round(+new Date())
@@ -194,8 +195,8 @@ module.exports = (robot) ->
           new actives.soak(robot, dest, msg, time)
           bot.daemon.cmd "getbalance", [soakacct, minconf], (e, r) ->
             soakbalance = parseFloat(r.result)
-            msg.reply "#{soakbalance}#{symb} will be soaked in about
-             #{bot.config.soakinterval_minutes} minutes"
+            msg.reply "#{soakbalance}#{symb} will be :umbrella:soaked:umbrella: to active users in about
+             #{bot.config.soakinterval_minutes} minutes - wake up! :bell:"
         newtime = Math.round +new Date() / 1000
         robot.brain.set from, newtime
         return
@@ -242,21 +243,21 @@ module.exports = (robot) ->
       msg.reply "[OK] #{symb} Block Height: #{blocks}"
 
   robot.respond /address/i, (msg) ->
-    who = msg.message.user.name.toLowerCase()
+    who = msg.envelope.user.login.toLowerCase()
     #just get a new address every time
     bot.daemon.cmd "getnewaddress", [who], (error, response) ->
       addr = response.result
       msg.reply "[OK] #{who}'s deposit address is: #{addr}"
 
   robot.respond /deposit/i, (msg) ->
-    who = msg.message.user.name.toLowerCase()
+    who = msg.envelope.user.login.toLowerCase()
     #just get a new address every time
     bot.daemon.cmd "getnewaddress", [who], (error, response) ->
       addr = response.result
       msg.reply "[OK] #{who}'s deposit address is: #{addr}. Any funds deposited here will be added to #{who}'s balance."
 
   robot.respond /balance\s*$/i, (msg) ->
-    who = msg.message.user.name
+    who = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     bot.daemon.cmd "getbalance", [who, minconf], (error, response) ->
       conf = parseFloat(response.result)
@@ -313,7 +314,7 @@ module.exports = (robot) ->
   robot.respond /tip (.*) ([0-9]*\.?[0-9]+)/i, (msg) ->
     dest = msg.match[1].toLowerCase().replace /@/, ""
     amnt = Number(msg.match[2])
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -363,7 +364,7 @@ module.exports = (robot) ->
   robot.respond /donate ([0-9]*\.?[0-9]+)/i, (msg) ->
     dest = "denarii"
     amnt = Number(msg.match[1])
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -414,7 +415,7 @@ module.exports = (robot) ->
   robot.respond /withdraw (.*) (.*)/i, (msg) ->
     dest = msg.match[2]
     amnt = Number(msg.match[1])
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -459,7 +460,7 @@ module.exports = (robot) ->
                   return
                 confirm = JSON.stringify(r.result)
                 msg.reply "[OK] Withdrawing #{amnt}#{symb} to #{dest}."
-                msg.reply "TXID: #{confirm}"
+                msg.reply "TXID: [#{confirm}](http://denarius.name/tx/#{r.result})"
                 bot.daemon.cmd "move", [from,botname,fee], (error, response) ->
                   if error isnt null
                     msg.reply "There was an error processing fees."
@@ -485,10 +486,10 @@ module.exports = (robot) ->
     if users.length is 1
       user = users[0]
       # Do something interesting here..
-      res.send "#{name} is user - #{user.name}"
+      res.send "#{name} is user - #{user.login} (#{user.id})"
     else if users.length > 1
       for k of users
-          res.send "#{k.name} is user: #{k.name}"
+          res.send "#{k.name} is user: #{k.login} (#{k.id})"
     else
       res.send "no match"
 
@@ -498,7 +499,7 @@ module.exports = (robot) ->
     destnum = dest.length
     amnt = Number(msg.match[1])
     rainamnt = (amnt/destnum)
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -547,13 +548,13 @@ module.exports = (robot) ->
   robot.respond /storm ([0-9]*\.?[0-9]+)/i, (msg) ->
     users = @robot.brain.data.users
     num = (k for own k of users).length
-    logins = (users[k].name.toLowerCase() for k of users)
-    loginats = (" @" + users[k].name for k of users)
+    logins = (users[k].login.toLowerCase() for k of users)
+    loginats = (" @" + users[k].login for k of users)
     dest = logins
     destnum = num
     amnt = Number(msg.match[1])
     rainamnt = (amnt/destnum)
-    from = msg.message.user.name.toLowerCase()
+    from = msg.envelope.user.login.toLowerCase()
     minconf = bot.config.minconf
     symb = bot.config.symb
     delay = bot.config.cmddelay
@@ -588,7 +589,7 @@ module.exports = (robot) ->
               robot.logger.error "#{JSON.stringify(error)}
               #{JSON.stringify(response)}"
               return
-        msg.reply "[OK] #{from} stormed #{rainamnt}#{symb} each to #{loginats.toString()}"
+        msg.reply "[OK] #{from} :ocean::zap::cyclone: stormed :cyclone::zap::ocean: #{rainamnt}#{symb} each to #{loginats.toString()}"
         newtime = Math.round +new Date() / 1000
         robot.brain.set from, newtime
         return
